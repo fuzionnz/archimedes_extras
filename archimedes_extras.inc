@@ -11,6 +11,7 @@
 function archimedes_extras_git_status() {
   // Some tests.
   $tests = array(
+    'new' => 'git ls-files --others --exclude-standard',
     'unstaged' => 'git diff-files --name-status -r --ignore-submodules',
     'uncommitted' => 'git diff-index --cached --name-status -r --ignore-submodules HEAD',
   );
