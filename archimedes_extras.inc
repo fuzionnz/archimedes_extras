@@ -61,9 +61,7 @@ function archimedes_extras_git_status() {
       }
     }
   }
-  if (isset($values)) {
-    return $values;
-  }
+  return $values;
 }
 
 /**

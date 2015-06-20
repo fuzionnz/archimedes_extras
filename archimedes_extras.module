@@ -16,6 +16,9 @@ function archimedes_extras_archimedes_alter(&$owl) {
   if ($values = archimedes_extras_git_status()) {
     $owl->createField('field_git_status', $values);
   }
+  else {
+    $owl->createField('field_git_status', FALSE);
+  }
 
   if ($info = archimedes_extras_civicrm_gitinfo()) {
     $owl->createField('field_civicrm_git_commit', $info['commit_hash']);
