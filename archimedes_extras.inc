@@ -9,10 +9,15 @@
  * uncommitted changes.
  */
 function archimedes_extras_git_status() {
-  // Some tests.
+  $values = array();
+  // Some tests. We ignore filemode changes where relevant.
   $tests = array(
-    'unstaged' => 'git diff-files --name-status -r --ignore-submodules',
-    'uncommitted' => 'git diff-index --cached --name-status -r --ignore-submodules HEAD',
+    // Files not yet part of the repo.
+    'new' => 'git ls-files --others --exclude-standard',
+    // Files modified but not yet staged for commit.
+    'unstaged' => 'git -c core.fileMode=false diff-files --name-status -r --ignore-submodules',
+    // Files staged for commit but not committed.
+    'uncommitted' => 'git -c core.fileMode=false diff-index --cached --name-status -r --ignore-submodules HEAD',
   );
 
   $prev_path = getcwd();
@@ -38,7 +43,7 @@ function archimedes_extras_git_status() {
           }
         }
 */
-        $message = '<strong>!type changes in !directory</strong>';
+        $message = '<strong>!type files in !directory</strong>';
         $result[$directory][$label]['header'] = t($message, array(
                                                     '!directory' => $directory,
                                                     '!type' => $label,
