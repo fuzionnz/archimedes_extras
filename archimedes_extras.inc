@@ -9,6 +9,7 @@
  * uncommitted changes.
  */
 function archimedes_extras_git_status() {
+  $values = array();
   // Some tests. We ignore filemode changes where relevant.
   $tests = array(
     // Files not yet part of the repo.
