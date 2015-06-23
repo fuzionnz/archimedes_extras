@@ -22,6 +22,12 @@ function archimedes_extras_git_status() {
 
   $prev_path = getcwd();
   $command = 'find . -name ".git" -type d';
+
+  // Only show top level repo unless configured to show others.
+  if (!variable_get('archimedes_extras_git_subrepos', FALSE)) {
+    $command .= ' -maxdepth 1';
+  }
+
   exec('find . -name .git -type d 2>/dev/null', $output);
   foreach ($output as $path) {
     $found[] = realpath(dirname($path));
@@ -34,15 +40,15 @@ function archimedes_extras_git_status() {
       $output = array();
       exec($test, $output);
       if (!empty($output)) {
+      /*
         $owners = array();
-/*
         foreach ($output as $file) {
           $owner = posix_getpwuid(fileowner($file));
           if (!in_array($owner, $owners)) {
             $owners[] = $owner;
           }
         }
-*/
+      */
         $message = '<strong>!type files in !directory</strong>';
         $result[$directory][$label]['header'] = t($message, array(
                                                     '!directory' => $directory,
