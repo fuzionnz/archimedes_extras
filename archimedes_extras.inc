@@ -53,7 +53,7 @@ function archimedes_extras_git_status() {
         $result[$directory][$label]['header'] = t($message, array(
                                                     '!directory' => $directory,
                                                     '!type' => $label,
-                                                    '%owners' => implode(', ', $owners),
+                                                    // '%owners' => implode(', ', $owners),
                                                   ));
         $result[$directory][$label]['body'] = $output;
       }

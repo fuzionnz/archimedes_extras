@@ -4,7 +4,7 @@ core = 7.x
 package = "Archimedes"
 version = "7.x-1.x"
 dependencies[] = archimedes
-project = archimedes_extras
 
+project = archimedes_extras
 project status url = https://projects.fuzion.co.nz/release-history
 ; version = "7.x-1.0"
