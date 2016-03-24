@@ -2,7 +2,7 @@
 
 /**
  * @file
- *
+ *  Provide additional reporting for Archimedes.
  */
 
 /**
@@ -13,17 +13,21 @@
 function archimedes_extras_archimedes_alter(&$owl) {
   module_load_include('inc', 'archimedes_extras');
   // Unstaged / uncommitted modifications in Git repos.
-  if ($values = archimedes_extras_git_status()) {
-    $owl->createField('field_git_status', $values);
-  }
-  else {
-    $owl->createField('field_git_status', '');
+  if (variable_get('archimedes_extras_report_git', true)) {
+    if ($values = archimedes_extras_git_status()) {
+      $owl->createField('field_git_status', $values);
+    }
+    else {
+      $owl->createField('field_git_status', '');
+    }
   }
 
-  if (module_exists('civicrm')) {
-    if ($info = archimedes_extras_civicrm_gitinfo()) {
-      $owl->createField('field_civicrm_git_commit', $info['commit_hash']);
-      $owl->createField('field_civicrm_git_branch', $info['branch']);
+  if (variable_get('archimedes_extras_report_civicrm', true)) {
+    if (module_exists('civicrm')) {
+      if ($info = archimedes_extras_civicrm_gitinfo()) {
+        $owl->createField('field_civicrm_git_commit', $info['commit_hash']);
+        $owl->createField('field_civicrm_git_branch', $info['branch']);
+      }
     }
   }
 }
