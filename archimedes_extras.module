@@ -28,6 +28,13 @@ function archimedes_extras_archimedes_alter(&$owl) {
         $owl->createField('field_civicrm_git_commit', $info['commit_hash']);
         $owl->createField('field_civicrm_git_branch', $info['branch']);
       }
+
+      if ($values = archimedes_extras_civicrm_lastcron()) {
+        $owl->createField('field_civicrm_lastcron', $values);
+      }
+      else {
+        $owl->createField('field_civicrm_lastcron', '');
+      }
     }
   }
 }
@@ -47,6 +54,11 @@ function archimedes_extras_archimedes_rows_alter(&$rows, &$owl) {
       $rows[] = array(t('CiviCRM Git Branch'), $civicrm_git_branch);
     }
     $git_status = (string) $owl->getField('field_git_status');
+
+    $civicrm_last_cron = (string) $owl->getField('field_civicrm_last_cron');
+    if (!empty($civicrm_last_cron)) {
+      $rows[] = array(t('CiviCRM Last Cron'), $civicrm_last_cron);
+    }
   }
   if (!empty($git_status)) {
     $rows[] = array(array('data' => t('Git Status'), 'style' => 'vertical-align: top;'), $git_status);
