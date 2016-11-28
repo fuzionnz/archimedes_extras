@@ -28,7 +28,7 @@ function archimedes_extras_git_status() {
     $command .= ' -maxdepth 1';
   }
 
-  exec('find . -name .git -type d 2>/dev/null', $output);
+  exec("$command 2>/dev/null", $output);
   foreach ($output as $path) {
     $found[] = realpath(dirname($path));
   }
@@ -53,7 +53,7 @@ function archimedes_extras_git_status() {
         $result[$directory][$label]['header'] = t($message, array(
                                                     '!directory' => $directory,
                                                     '!type' => $label,
-                                                    '%owners' => implode(', ', $owners),
+                                                    // '%owners' => implode(', ', $owners),
                                                   ));
         $result[$directory][$label]['body'] = $output;
       }
