@@ -109,20 +109,36 @@ function archimedes_extras_civicrm_lastcron() {
   if (module_exists('civicrm')) {
     civicrm_initialize();
 
-    $statusPreference = new CRM_Core_DAO_StatusPreference();
-    $statusPreference->domain_id = CRM_Core_Config::domainID();
-    $statusPreference->name = 'checkLastCron';
-    if ($statusPreference->find(TRUE) && !empty($statusPreference->check_info)) {
-      $lastCron = $statusPreference->check_info;
-      $since = time() - $lastCron;
-    }
-    else {
-      $since = -1;
-    }
+    try {
+      $result = civicrm_api3('JobLog', 'get', array(
+        // 'name' => 'Send Scheduled Mailings'
+        'sequential' => 1,
+        'options' => array(
+          'limit' => 1,
+          'sort' => "run_time desc"
+        ),
+      ));
 
-    if ($since > 3600 || $since === -1) {
-      $when = ($since == -1) ? 'never' : date('c', $lastCron);
-      watchdog('archimedes_extras', 'CiviCRM cron may not be running? Last execution was @time.', array('@time' => $when), WATCHDOG_WARNING);
+      if (isset($result['values'][0]['run_time'])) {
+        // civicrm_job_log does not have TZ info, so get from site (?).
+        $tz = variable_get('date_default_timezone', 'UTC');
+        // Feels crusty.
+        $timestr = $result['values'][0]['run_time'] . ' ' . $tz;
+        if ($run_time = strtotime($timestr)) {
+          $since = time() - $run_time;
+        }
+      }
+      else {
+        $since = -1;
+      }
+
+      if ($since > 3600 || $since === -1) {
+        $when = ($since == -1) ? 'never' : date('c', $lastCron);
+        watchdog('archimedes_extras', 'CiviCRM cron may not be running? Last execution was @time.', array('@time' => $when), WATCHDOG_WARNING);
+      }
+    }
+    catch (Exception $e) {
+      watchdog('archimedes_extras', 'Unable to get job info from CiviCRM: %message', array('%message' => $e->getMessage()), WATCHDOG_ERROR);
     }
 
     return $since;
