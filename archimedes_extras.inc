@@ -5,6 +5,41 @@
  */
 
 /**
+ * Identify the deployed Git branch and hash, and a remote URL.
+ */
+function archimedes_extras_git_info() {
+  // Get remotes, then get the URL of the first remote named
+  // 'fuzion' or 'origin'.
+  $output = array();
+  exec('git config remote.origin.url', $output);
+  if (!empty($output)) {
+    $info['remote_url'] = reset($output);
+  }
+  else {
+    exec('git config remote.fuzion.url', $output);
+    if (!empty($output)) {
+      $info['remote_url'] = reset($output);
+    }
+  }
+
+  // Get the deployed state (commit and branch).
+  $cmds = array(
+    'commit_hash' => 'git rev-parse --short HEAD',
+    'branch' => 'git rev-parse --abbrev-ref HEAD',
+  );
+  foreach ($cmds as $key => $cmd) {
+    $output = array();
+    // Get current commit hash.
+    exec($cmd, $output);
+    if (!empty($output)) {
+      $info[$key] = reset($output);
+    }
+  }
+
+  return $info;
+}
+
+/**
  * Find Git repos in the site root, report if there are unstaged /
  * uncommitted changes.
  */
@@ -109,38 +144,26 @@ function archimedes_extras_civicrm_lastcron() {
   if (module_exists('civicrm')) {
     civicrm_initialize();
 
-    try {
-      $result = civicrm_api3('JobLog', 'get', array(
-        // 'name' => 'Send Scheduled Mailings'
-        'sequential' => 1,
-        'options' => array(
-          'limit' => 1,
-          'sort' => "run_time desc"
-        ),
-      ));
-
-      if (isset($result['values'][0]['run_time'])) {
-        // civicrm_job_log does not have TZ info, so get from site (?).
-        $tz = variable_get('date_default_timezone', 'UTC');
-        // Feels crusty.
-        $timestr = $result['values'][0]['run_time'] . ' ' . $tz;
-        if ($run_time = strtotime($timestr)) {
-          $since = time() - $run_time;
+    $since = -1;
+    if (class_exists('CRM_Core_DAO_StatusPreference')) {
+      // I have no idea why the class would exist and not the table.
+      // Maybe Fuzion 4.6-ish does this?
+      $checkTableSql = "SHOW TABLES LIKE 'civicrm_status_pref'";
+      $foundName = CRM_Core_DAO::singleValueQuery($checkTableSql);
+      if ($foundName == 'civicrm_status_pref') {
+        $statusPreference = new CRM_Core_DAO_StatusPreference();
+        $statusPreference->domain_id = CRM_Core_Config::domainID();
+        $statusPreference->name = 'checkLastCron';
+        if ($statusPreference->find(TRUE) && !empty($statusPreference->check_info)) {
+          $lastCron = $statusPreference->check_info;
+          $since = time() - $lastCron;
+        }
+        if ($since > 3600 || $since === -1) {
+          $when = ($since == -1) ? 'never' : date('c', $lastCron);
+          watchdog('archimedes_extras', 'CiviCRM cron may not be running? Last execution was @time.', array('@time' => $when), WATCHDOG_WARNING);
         }
       }
-      else {
-        $since = -1;
-      }
-
-      if ($since > 3600 || $since === -1) {
-        $when = ($since == -1) ? 'never' : date('c', $lastCron);
-        watchdog('archimedes_extras', 'CiviCRM cron may not be running? Last execution was @time.', array('@time' => $when), WATCHDOG_WARNING);
-      }
     }
-    catch (Exception $e) {
-      watchdog('archimedes_extras', 'Unable to get job info from CiviCRM: %message', array('%message' => $e->getMessage()), WATCHDOG_ERROR);
-    }
-
-    return $since;
   }
+  return $since;
 }
